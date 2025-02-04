@@ -1,7 +1,7 @@
 
 # MathStudio3
 
-A lightweight, in-browser computational notebook that emulates some of the functionality of Mathematica. This project uses [math.js](https://mathjs.org/) for mathematical evaluations and [Plotly.js](https://plotly.com/javascript/) for interactive plotting.
+A lightweight, in-browser computational notebook that emulates some of the functionality of Mathematica. This project uses [math.js](https://mathjs.org/) for mathematical evaluations and [Plotly.js](https://plotly.com/javascript/) for interactive plotting. Please try it out [here](https://sir-teo.github.io/MathStudio3/).
 
 ## Features
 
@@ -69,11 +69,6 @@ Below are several examples to try in your notebook cells:
   ```mathematica
   histPlot([1, 2, 2, 3, 3, 3, 4, 4, 4, 4])
   ```
-  Alternatively, you can pass a math.js array:
-  ```mathematica
-  histPlot(math.range(1, 5).toArray())
-  ```
-
 - **Polar Plot:**  
   Plot the polar function \( r = \sin(3\theta) \) from \(0\) to \(2\pi\):
   ```mathematica
