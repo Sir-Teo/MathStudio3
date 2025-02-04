@@ -1,12 +1,14 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>MathStudio 3</title>
+    <title>MathStudio (LaTeX Output)</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <!-- Load math.js -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjs/11.8.0/math.js"></script>
     <!-- Load Plotly.js -->
     <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <!-- Load MathJax for LaTeX rendering -->
+    <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
     <style>
         body {
             font-family: system-ui, -apple-system, sans-serif;
@@ -120,43 +122,39 @@
     </div>
     
     <!-- Display current variable state -->
+    <div class="history-display">
+        <h3>Current Variable State:</h3>
+        <pre id="variableState"></pre>
+    </div>
+
+    <!-- Example Usages -->
     <div class="examples">
         <h3>Example Usages</h3>
         <p>Try typing any of the following expressions in a new cell and hit <strong>Enter</strong>:</p>
         <pre>
-    // Basic arithmetic and variable assignment
-    2 + 2
-    a = 5
-    a * 10
-    
-    // Plotting functions
-    plot('x^2', -10, 10)
-    scatter('sin(x)', -6.28, 6.28)
-    barPlot('cos(x)', 0, 6.28)
-    histPlot([1, 2, 2, 3, 3, 3, 4, 4, 5])
-    polarPlot('1+cos(theta)', 0, 6.28)
-    
-    // Algebraic operations and matrices
-    
-    // Solve a system of linear equations:
-    //   2x + y = 1
-    //   x  - y = 0
-    A = [[2, 1], [1, -1]]
-    b = [1, 0]
-    lusolve(A, b)
-    
-    // Matrix operations
-    m = [[1, 2], [3, 4]]
-    m * m           // Matrix multiplication
-    det(m)          // Determinant of m
-    multiply(m, 10) // Scalar multiplication
-    multiply(m, m)  // Element-wise multiplication
-    
-    // Advanced usage: simplify an algebraic expression
-    simplify('x^2 - 4')
+// Basic arithmetic
+2 + 2
+
+// Assigning a variable and using it
+a = 5
+a * 10
+
+// Custom plot: Plot y = x^2 from x = -10 to 10
+plot('x^2', -10, 10)
+
+// Scatter plot: Plot y = sin(x) as points from -2π to 2π
+scatter('sin(x)', -6.28, 6.28)
+
+// Bar plot: Plot y = cos(x) from 0 to 2π
+barPlot('cos(x)', 0, 6.28)
+
+// Histogram: Create a histogram of an array of numbers
+histPlot([1, 2, 2, 3, 3, 3, 4, 4, 5])
+
+// Polar plot: Plot r = 1 + cos(theta) from theta = 0 to 2π
+polarPlot('1+cos(theta)', 0, 6.28)
         </pre>
     </div>
-    
 
     <script>
         const notebook = document.getElementById('notebook');
@@ -233,11 +231,9 @@
 
         // 4. Histogram Plot: `histPlot(data, options)`
         scope.histPlot = function(data, options) {
-            // If data is a math.js Matrix, convert it to a JavaScript array.
             if (data && typeof data.toArray === 'function') {
                 data = data.toArray();
             }
-            // Ensure that data is now an array.
             if (!Array.isArray(data)) {
                 throw new Error("histPlot expects an array of numbers as the first argument.");
             }
@@ -260,7 +256,6 @@
             const thetaValues = math.range(thetaMin, thetaMax, (thetaMax - thetaMin) / numPoints, true).toArray();
             const compiled = math.compile(expr);
             const rValues = thetaValues.map(theta => compiled.evaluate({ theta }));
-            // Convert polar to Cartesian coordinates for Plotly
             const xValues = thetaValues.map((theta, i) => rValues[i] * Math.cos(theta));
             const yValues = thetaValues.map((theta, i) => rValues[i] * Math.sin(theta));
             return {
@@ -314,15 +309,30 @@
             outputLabel.textContent = `Out[${evaluationNumber}]:`;
         }
 
+        // Convert the evaluated result to LaTeX (if possible)
+        // For numbers, we simply output the number. For other types, we attempt a conversion.
+        function toLatex(result) {
+            // If the result is a number or a simple string, just return it.
+            if (typeof result === 'number' || typeof result === 'string') {
+                return result;
+            }
+            // Attempt to use math.parse and toTex if possible.
+            try {
+                // Note: This conversion might not work for every type.
+                return math.parse(result.toString()).toTex();
+            } catch (e) {
+                return result.toString();
+            }
+        }
+
         function evaluateExpression(input, cell) {
             const outputElement = cell.querySelector('.result');
             try {
-                // Check for the special command 'Amy'
+                // Special command "Amy"
                 if (input.trim() === 'Amy') {
                     evaluationCount++;
                     updateCellNumbers(cell, evaluationCount);
                     outputElement.textContent = 'cmllkagqd🥚';
-                    // Store the result under the special variable (like _1, _2, etc.)
                     scope[`_${evaluationCount}`] = 'cmllkagqd🥚';
                     updateVariableState();
                     return true;
@@ -331,7 +341,7 @@
                 evaluationCount++;
                 updateCellNumbers(cell, evaluationCount);
                 
-                // Evaluate the expression in the persistent scope.
+                // Evaluate the expression within the persistent scope.
                 const result = math.evaluate(input, scope);
                 
                 // If the result is flagged for Plotly rendering, embed a plot.
@@ -339,14 +349,17 @@
                     outputElement.innerHTML = `<div id="plot-${evaluationCount}" style="width:100%; height:400px;"></div>`;
                     Plotly.newPlot(`plot-${evaluationCount}`, result.data, result.layout);
                 } else {
-                    // Display the result as formatted text
-                    outputElement.textContent = math.format(result, {precision: 14});
+                    // Convert the result to LaTeX and wrap in delimiters.
+                    const latexResult = toLatex(result);
+                    outputElement.innerHTML = `\\( ${latexResult} \\)`;
+                    // Tell MathJax to typeset the new content.
+                    MathJax.typesetPromise([outputElement]);
                 }
                 
-                // Store the result in a special variable (like _1, _2, etc.)
+                // Save the result in the scope as _1, _2, etc.
                 scope[`_${evaluationCount}`] = result;
                 
-                // Update the variable state display
+                // Update the variable state display.
                 updateVariableState();
                 
                 return true;
@@ -357,7 +370,7 @@
             }
         }
 
-        // Handle input events
+        // Handle input events: press Enter to evaluate and then create a new cell.
         notebook.addEventListener('keydown', (event) => {
             if (event.target.classList.contains('input-field') && event.key === 'Enter') {
                 const currentCell = event.target.closest('.cell');
@@ -372,7 +385,7 @@
             }
         });
 
-        // Focus the first input field
+        // Focus the first input field.
         document.querySelector('.input-field').focus();
     </script>
 </body>
