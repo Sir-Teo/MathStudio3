@@ -1,9 +1,11 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>MathStudio3</title>
+    <title>Web Mathematica Clone</title>
+    <!-- Load math.js -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjs/11.8.0/math.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/plotly.js/2.24.1/plotly.min.js"></script>
+    <!-- Load Plotly.js -->
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
     <style>
         body {
             font-family: system-ui, -apple-system, sans-serif;
@@ -61,12 +63,6 @@
             border: 1px solid #ddd;
             border-radius: 4px;
         }
-
-        .plot-container {
-            width: 100%;
-            height: 400px;
-            margin-top: 10px;
-        }
     </style>
 </head>
 <body>
@@ -93,61 +89,127 @@
         let evaluationCount = 0;
         const scope = {};
 
-        // Add plotting functions to scope
-        scope.Plot = function(expr, range = [-10, 10], points = 100) {
-            const [start, end] = range;
-            const step = (end - start) / points;
-            const x = [], y = [];
-            
-            // Create a function from the expression
-            let fn;
-            if (typeof expr === 'string') {
-                fn = math.compile(expr);
-            } else if (typeof expr === 'function') {
-                fn = expr;
-            } else {
-                throw new Error('Expression must be a string or function');
-            }
+        // --- Custom Plotting Functions Integration ---
 
-            // Generate points
-            for (let i = 0; i <= points; i++) {
-                const xVal = start + i * step;
-                x.push(xVal);
-                try {
-                    const yVal = fn.evaluate({x: xVal});
-                    y.push(yVal);
-                } catch (e) {
-                    y.push(null);
-                }
-            }
+        // Helper function to generate x values
+        function generateXValues(xMin, xMax, numPoints = 100) {
+            const step = (xMax - xMin) / numPoints;
+            return math.range(xMin, xMax, step, true).toArray();
+        }
 
+        // 1. Line Plot: `plot(expr, xMin, xMax, options)`
+        scope.plot = function(expr, xMin, xMax, options) {
+            const xValues = generateXValues(xMin, xMax);
+            const compiled = math.compile(expr);
+            const yValues = xValues.map(x => compiled.evaluate({ x }));
             return {
-                type: 'plot',
-                data: [{ x, y, type: 'scatter', mode: 'lines' }],
-                layout: {
-                    title: `Plot of ${expr}`,
-                    xaxis: { title: 'x' },
-                    yaxis: { title: 'y' }
-                }
-            };
-        };
-
-        scope.Plot2D = function(points) {
-            return {
-                type: 'plot',
+                __plotly: true,
                 data: [{
-                    x: points.map(p => p[0]),
-                    y: points.map(p => p[1]),
-                    mode: 'markers',
-                    type: 'scatter'
+                    x: xValues,
+                    y: yValues,
+                    type: 'scatter',
+                    mode: 'lines'
                 }],
-                layout: {
-                    title: '2D Plot',
-                    xaxis: { title: 'x' },
-                    yaxis: { title: 'y' }
-                }
+                layout: Object.assign({ 
+                    title: `Plot of ${expr}`,
+                    margin: { t: 40 }
+                }, options || {})
             };
         };
+
+        // 2. Scatter Plot: `scatter(expr, xMin, xMax, options)`
+        scope.scatter = function(expr, xMin, xMax, options) {
+            const xValues = generateXValues(xMin, xMax);
+            const compiled = math.compile(expr);
+            const yValues = xValues.map(x => compiled.evaluate({ x }));
+            return {
+                __plotly: true,
+                data: [{
+                    x: xValues,
+                    y: yValues,
+                    type: 'scatter',
+                    mode: 'markers'
+                }],
+                layout: Object.assign({
+                    title: `Scatter Plot of ${expr}`,
+                    margin: { t: 40 }
+                }, options || {})
+            };
+        };
+
+        // 3. Bar Plot: `barPlot(expr, xMin, xMax, options)`
+        // Evaluates the expression at discrete x values and displays as bars.
+        scope.barPlot = function(expr, xMin, xMax, options) {
+            const xValues = generateXValues(xMin, xMax, 20); // fewer points for bars
+            const compiled = math.compile(expr);
+            const yValues = xValues.map(x => compiled.evaluate({ x }));
+            return {
+                __plotly: true,
+                data: [{
+                    x: xValues,
+                    y: yValues,
+                    type: 'bar'
+                }],
+                layout: Object.assign({
+                    title: `Bar Plot of ${expr}`,
+                    margin: { t: 40 }
+                }, options || {})
+            };
+        };
+
+        // 4. Histogram Plot: `histPlot(data, options)`
+// Accepts an array (or math.js Matrix) of numerical data.
+scope.histPlot = function(data, options) {
+    // If data is a math.js Matrix, convert it to a JavaScript array.
+    if (data && typeof data.toArray === 'function') {
+        data = data.toArray();
+    }
+    // Ensure that data is now an array.
+    if (!Array.isArray(data)) {
+        throw new Error("histPlot expects an array of numbers as the first argument.");
+    }
+    return {
+        __plotly: true,
+        data: [{
+            x: data,
+            type: 'histogram'
+        }],
+        layout: Object.assign({
+            title: `Histogram`,
+            margin: { t: 40 }
+        }, options || {})
+    };
+};
+
+
+        // 5. Polar Plot: `polarPlot(expr, thetaMin, thetaMax, options)`
+        // Evaluates the expression for r in terms of theta and converts to Cartesian coordinates.
+        scope.polarPlot = function(expr, thetaMin, thetaMax, options) {
+            const numPoints = 100;
+            const thetaValues = math.range(thetaMin, thetaMax, (thetaMax - thetaMin) / numPoints, true).toArray();
+            const compiled = math.compile(expr);
+            const rValues = thetaValues.map(theta => compiled.evaluate({ theta }));
+            // Convert polar to Cartesian coordinates for Plotly
+            const xValues = thetaValues.map((theta, i) => rValues[i] * Math.cos(theta));
+            const yValues = thetaValues.map((theta, i) => rValues[i] * Math.sin(theta));
+            return {
+                __plotly: true,
+                data: [{
+                    x: xValues,
+                    y: yValues,
+                    type: 'scatter',
+                    mode: 'lines'
+                }],
+                layout: Object.assign({
+                    title: `Polar Plot of ${expr}`,
+                    xaxis: { title: 'x' },
+                    yaxis: { title: 'y' },
+                    margin: { t: 40 }
+                }, options || {})
+            };
+        };
+
+        // --- End of Custom Plotting Functions ---
 
         function createNewCell() {
             const cell = document.createElement('div');
@@ -168,7 +230,7 @@
 
         function updateVariableState() {
             const stateDisplay = Object.entries(scope)
-                .filter(([key, value]) => !key.startsWith('_') && typeof value !== 'function')
+                .filter(([key, value]) => !key.startsWith('_'))
                 .map(([key, value]) => `${key} = ${JSON.stringify(value)}`)
                 .join('\n');
             variableState.textContent = stateDisplay;
@@ -181,41 +243,26 @@
             outputLabel.textContent = `Out[${evaluationNumber}]:`;
         }
 
-        function displayOutput(result, outputElement) {
-            if (result && result.type === 'plot') {
-                // Create a container for the plot
-                const plotContainer = document.createElement('div');
-                plotContainer.className = 'plot-container';
-                outputElement.appendChild(plotContainer);
-                
-                // Create the plot
-                Plotly.newPlot(plotContainer, result.data, result.layout);
-                return plotContainer;
-            } else {
-                // Regular output
-                outputElement.textContent = math.format(result, {precision: 14});
-                return result;
-            }
-        }
-
         function evaluateExpression(input, cell) {
-            const outputArea = cell.querySelector('.output-area');
-            const outputElement = outputArea.querySelector('.result');
-            outputElement.innerHTML = ''; // Clear previous output
-            
+            const outputElement = cell.querySelector('.result');
             try {
                 evaluationCount++;
                 updateCellNumbers(cell, evaluationCount);
                 
-                // Evaluate the expression in the persistent scope
+                // Evaluate the expression in the persistent scope.
                 const result = math.evaluate(input, scope);
                 
-                // Display the result
-                const displayedResult = displayOutput(result, outputElement);
-                outputElement.className = 'result';
+                // If the result is flagged for Plotly rendering, embed a plot.
+                if (result && result.__plotly) {
+                    outputElement.innerHTML = `<div id="plot-${evaluationCount}" style="width:100%; height:400px;"></div>`;
+                    Plotly.newPlot(`plot-${evaluationCount}`, result.data, result.layout);
+                } else {
+                    // Display the result as formatted text
+                    outputElement.textContent = math.format(result, {precision: 14});
+                }
                 
-                // Store the result in a special variable
-                scope[`_${evaluationCount}`] = displayedResult;
+                // Store the result in a special variable (like _1, _2, etc.)
+                scope[`_${evaluationCount}`] = result;
                 
                 // Update the variable state display
                 updateVariableState();
@@ -234,7 +281,7 @@
                 const currentCell = event.target.closest('.cell');
                 const success = evaluateExpression(event.target.value, currentCell);
                 
-                // Only create a new cell if this isn't the last cell
+                // Only create a new cell if this is the last cell.
                 const isLastCell = currentCell === notebook.lastElementChild;
                 if (success && isLastCell) {
                     const newInput = createNewCell();
