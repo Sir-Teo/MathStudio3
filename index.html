@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Web Mathematica Clone</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjs/11.8.0/math.js"></script>
+    <style>
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            max-width: 800px;
+            margin: 20px auto;
+            background-color: #f8f9fa;
+            padding: 20px;
+        }
+
+        .cell {
+            margin-bottom: 20px;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .input-area {
+            background-color: #f1f1f1;
+            padding: 10px;
+            display: flex;
+        }
+
+        .cell-number {
+            color: #666;
+            font-family: monospace;
+            margin-right: 10px;
+            user-select: none;
+        }
+
+        .input-field {
+            flex-grow: 1;
+            font-family: monospace;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            background-color: white;
+        }
+
+        .output-area {
+            background-color: white;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-top: none;
+            font-family: monospace;
+            min-height: 20px;
+        }
+
+        .error {
+            color: #d32f2f;
+        }
+
+        .history-display {
+            margin-top: 20px;
+            padding: 10px;
+            background-color: #f8f9fa;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <div id="notebook">
+        <div class="cell">
+            <div class="input-area">
+                <span class="cell-number">In[*]:</span>
+                <input type="text" class="input-field" placeholder="Enter mathematical expression...">
+            </div>
+            <div class="output-area">
+                <span class="cell-number">Out[*]:</span>
+                <span class="result"></span>
+            </div>
+        </div>
+    </div>
+    <div class="history-display">
+        <h3>Current Variable State:</h3>
+        <pre id="variableState"></pre>
+    </div>
+
+    <script>
+        const notebook = document.getElementById('notebook');
+        const variableState = document.getElementById('variableState');
+        let evaluationCount = 0;
+        const scope = {};
+
+        function createNewCell() {
+            const cell = document.createElement('div');
+            cell.className = 'cell';
+            cell.innerHTML = `
+                <div class="input-area">
+                    <span class="cell-number">In[*]:</span>
+                    <input type="text" class="input-field" placeholder="Enter mathematical expression...">
+                </div>
+                <div class="output-area">
+                    <span class="cell-number">Out[*]:</span>
+                    <span class="result"></span>
+                </div>
+            `;
+            notebook.appendChild(cell);
+            return cell.querySelector('.input-field');
+        }
+
+        function updateVariableState() {
+            const stateDisplay = Object.entries(scope)
+                .filter(([key, value]) => !key.startsWith('_'))
+                .map(([key, value]) => `${key} = ${JSON.stringify(value)}`)
+                .join('\n');
+            variableState.textContent = stateDisplay;
+        }
+
+        function updateCellNumbers(currentCell, evaluationNumber) {
+            const inputLabel = currentCell.querySelector('.input-area .cell-number');
+            const outputLabel = currentCell.querySelector('.output-area .cell-number');
+            inputLabel.textContent = `In[${evaluationNumber}]:`;
+            outputLabel.textContent = `Out[${evaluationNumber}]:`;
+        }
+
+        function evaluateExpression(input, cell) {
+            const outputElement = cell.querySelector('.result');
+            try {
+                evaluationCount++;
+                updateCellNumbers(cell, evaluationCount);
+                
+                // Evaluate the expression in the persistent scope
+                const result = math.evaluate(input, scope);
+                
+                // Display the result
+                outputElement.textContent = math.format(result, {precision: 14});
+                outputElement.className = 'result';
+                
+                // Store the result in a special variable
+                scope[`_${evaluationCount}`] = result;
+                
+                // Update the variable state display
+                updateVariableState();
+                
+                return true;
+            } catch (error) {
+                outputElement.textContent = error.message;
+                outputElement.className = 'result error';
+                return false;
+            }
+        }
+
+        // Handle input events
+        notebook.addEventListener('keydown', (event) => {
+            if (event.target.classList.contains('input-field') && event.key === 'Enter') {
+                const currentCell = event.target.closest('.cell');
+                const success = evaluateExpression(event.target.value, currentCell);
+                
+                // Only create a new cell if this isn't the last cell
+                const isLastCell = currentCell === notebook.lastElementChild;
+                if (success && isLastCell) {
+                    const newInput = createNewCell();
+                    newInput.focus();
+                }
+            }
+        });
+
+        // Focus the first input field
+        document.querySelector('.input-field').focus();
+    </script>
+</body>
+</html>
