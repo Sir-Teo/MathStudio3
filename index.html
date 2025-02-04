@@ -275,6 +275,17 @@
         function evaluateExpression(input, cell) {
             const outputElement = cell.querySelector('.result');
             try {
+                // Check for the special command 'Amy'
+                if (input.trim() === 'Amy') {
+                    evaluationCount++;
+                    updateCellNumbers(cell, evaluationCount);
+                    outputElement.textContent = 'cmllkagqd🥚';
+                    // Store the result under the special variable (like _1, _2, etc.)
+                    scope[`_${evaluationCount}`] = 'cmllkagqd🥚';
+                    updateVariableState();
+                    return true;
+                }
+                
                 evaluationCount++;
                 updateCellNumbers(cell, evaluationCount);
                 
