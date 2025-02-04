@@ -3,6 +3,7 @@
 <head>
     <title>Web Mathematica Clone</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjs/11.8.0/math.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/plotly.js/2.24.1/plotly.min.js"></script>
     <style>
         body {
             font-family: system-ui, -apple-system, sans-serif;
@@ -60,6 +61,12 @@
             border: 1px solid #ddd;
             border-radius: 4px;
         }
+
+        .plot-container {
+            width: 100%;
+            height: 400px;
+            margin-top: 10px;
+        }
     </style>
 </head>
 <body>
@@ -86,6 +93,62 @@
         let evaluationCount = 0;
         const scope = {};
 
+        // Add plotting functions to scope
+        scope.Plot = function(expr, range = [-10, 10], points = 100) {
+            const [start, end] = range;
+            const step = (end - start) / points;
+            const x = [], y = [];
+            
+            // Create a function from the expression
+            let fn;
+            if (typeof expr === 'string') {
+                fn = math.compile(expr);
+            } else if (typeof expr === 'function') {
+                fn = expr;
+            } else {
+                throw new Error('Expression must be a string or function');
+            }
+
+            // Generate points
+            for (let i = 0; i <= points; i++) {
+                const xVal = start + i * step;
+                x.push(xVal);
+                try {
+                    const yVal = fn.evaluate({x: xVal});
+                    y.push(yVal);
+                } catch (e) {
+                    y.push(null);
+                }
+            }
+
+            return {
+                type: 'plot',
+                data: [{ x, y, type: 'scatter', mode: 'lines' }],
+                layout: {
+                    title: `Plot of ${expr}`,
+                    xaxis: { title: 'x' },
+                    yaxis: { title: 'y' }
+                }
+            };
+        };
+
+        scope.Plot2D = function(points) {
+            return {
+                type: 'plot',
+                data: [{
+                    x: points.map(p => p[0]),
+                    y: points.map(p => p[1]),
+                    mode: 'markers',
+                    type: 'scatter'
+                }],
+                layout: {
+                    title: '2D Plot',
+                    xaxis: { title: 'x' },
+                    yaxis: { title: 'y' }
+                }
+            };
+        };
+
         function createNewCell() {
             const cell = document.createElement('div');
             cell.className = 'cell';
@@ -105,7 +168,7 @@
 
         function updateVariableState() {
             const stateDisplay = Object.entries(scope)
-                .filter(([key, value]) => !key.startsWith('_'))
+                .filter(([key, value]) => !key.startsWith('_') && typeof value !== 'function')
                 .map(([key, value]) => `${key} = ${JSON.stringify(value)}`)
                 .join('\n');
             variableState.textContent = stateDisplay;
@@ -118,8 +181,28 @@
             outputLabel.textContent = `Out[${evaluationNumber}]:`;
         }
 
+        function displayOutput(result, outputElement) {
+            if (result && result.type === 'plot') {
+                // Create a container for the plot
+                const plotContainer = document.createElement('div');
+                plotContainer.className = 'plot-container';
+                outputElement.appendChild(plotContainer);
+                
+                // Create the plot
+                Plotly.newPlot(plotContainer, result.data, result.layout);
+                return plotContainer;
+            } else {
+                // Regular output
+                outputElement.textContent = math.format(result, {precision: 14});
+                return result;
+            }
+        }
+
         function evaluateExpression(input, cell) {
-            const outputElement = cell.querySelector('.result');
+            const outputArea = cell.querySelector('.output-area');
+            const outputElement = outputArea.querySelector('.result');
+            outputElement.innerHTML = ''; // Clear previous output
+            
             try {
                 evaluationCount++;
                 updateCellNumbers(cell, evaluationCount);
@@ -128,11 +211,11 @@
                 const result = math.evaluate(input, scope);
                 
                 // Display the result
-                outputElement.textContent = math.format(result, {precision: 14});
+                const displayedResult = displayOutput(result, outputElement);
                 outputElement.className = 'result';
                 
                 // Store the result in a special variable
-                scope[`_${evaluationCount}`] = result;
+                scope[`_${evaluationCount}`] = displayedResult;
                 
                 // Update the variable state display
                 updateVariableState();
