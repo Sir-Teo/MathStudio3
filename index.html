@@ -2,6 +2,7 @@
 <html>
 <head>
     <title>Web Mathematica Clone</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <!-- Load math.js -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjs/11.8.0/math.js"></script>
     <!-- Load Plotly.js -->
@@ -13,6 +14,7 @@
             margin: 20px auto;
             background-color: #f8f9fa;
             padding: 20px;
+            box-sizing: border-box;
         }
 
         .cell {
@@ -25,6 +27,7 @@
             background-color: #f1f1f1;
             padding: 10px;
             display: flex;
+            flex-wrap: wrap;
         }
 
         .cell-number {
@@ -32,6 +35,7 @@
             font-family: monospace;
             margin-right: 10px;
             user-select: none;
+            min-width: 60px;
         }
 
         .input-field {
@@ -41,6 +45,7 @@
             border: 1px solid #ddd;
             border-radius: 4px;
             background-color: white;
+            min-width: 0;
         }
 
         .output-area {
@@ -50,6 +55,7 @@
             border-top: none;
             font-family: monospace;
             min-height: 20px;
+            overflow-x: auto;
         }
 
         .error {
@@ -62,6 +68,33 @@
             background-color: #f8f9fa;
             border: 1px solid #ddd;
             border-radius: 4px;
+            word-wrap: break-word;
+        }
+
+        /* Responsive Plot Container */
+        [id^="plot-"] {
+            width: 100% !important;
+            height: 400px;
+        }
+
+        /* Media Query for Small Screens */
+        @media (max-width: 600px) {
+            body {
+                padding: 10px;
+            }
+
+            .input-area, .output-area, .history-display {
+                padding: 8px;
+            }
+
+            .cell-number {
+                min-width: 50px;
+                font-size: 0.9em;
+            }
+
+            .input-field {
+                font-size: 0.9em;
+            }
         }
     </style>
 </head>
@@ -138,7 +171,6 @@
         };
 
         // 3. Bar Plot: `barPlot(expr, xMin, xMax, options)`
-        // Evaluates the expression at discrete x values and displays as bars.
         scope.barPlot = function(expr, xMin, xMax, options) {
             const xValues = generateXValues(xMin, xMax, 20); // fewer points for bars
             const compiled = math.compile(expr);
@@ -158,32 +190,29 @@
         };
 
         // 4. Histogram Plot: `histPlot(data, options)`
-// Accepts an array (or math.js Matrix) of numerical data.
-scope.histPlot = function(data, options) {
-    // If data is a math.js Matrix, convert it to a JavaScript array.
-    if (data && typeof data.toArray === 'function') {
-        data = data.toArray();
-    }
-    // Ensure that data is now an array.
-    if (!Array.isArray(data)) {
-        throw new Error("histPlot expects an array of numbers as the first argument.");
-    }
-    return {
-        __plotly: true,
-        data: [{
-            x: data,
-            type: 'histogram'
-        }],
-        layout: Object.assign({
-            title: `Histogram`,
-            margin: { t: 40 }
-        }, options || {})
-    };
-};
-
+        scope.histPlot = function(data, options) {
+            // If data is a math.js Matrix, convert it to a JavaScript array.
+            if (data && typeof data.toArray === 'function') {
+                data = data.toArray();
+            }
+            // Ensure that data is now an array.
+            if (!Array.isArray(data)) {
+                throw new Error("histPlot expects an array of numbers as the first argument.");
+            }
+            return {
+                __plotly: true,
+                data: [{
+                    x: data,
+                    type: 'histogram'
+                }],
+                layout: Object.assign({
+                    title: `Histogram`,
+                    margin: { t: 40 }
+                }, options || {})
+            };
+        };
 
         // 5. Polar Plot: `polarPlot(expr, thetaMin, thetaMax, options)`
-        // Evaluates the expression for r in terms of theta and converts to Cartesian coordinates.
         scope.polarPlot = function(expr, thetaMin, thetaMax, options) {
             const numPoints = 100;
             const thetaValues = math.range(thetaMin, thetaMax, (thetaMax - thetaMin) / numPoints, true).toArray();
