@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Web Mathematica Clone</title>
+    <title>MathStudio 3</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <!-- Load math.js -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjs/11.8.0/math.js"></script>
@@ -62,13 +62,20 @@
             color: #d32f2f;
         }
 
-        .history-display {
+        .history-display, .examples {
             margin-top: 20px;
             padding: 10px;
             background-color: #f8f9fa;
             border: 1px solid #ddd;
             border-radius: 4px;
             word-wrap: break-word;
+        }
+
+        .examples pre {
+            background-color: #e9ecef;
+            padding: 10px;
+            border-radius: 4px;
+            overflow-x: auto;
         }
 
         /* Responsive Plot Container */
@@ -83,7 +90,7 @@
                 padding: 10px;
             }
 
-            .input-area, .output-area, .history-display {
+            .input-area, .output-area, .history-display, .examples {
                 padding: 8px;
             }
 
@@ -111,10 +118,45 @@
             </div>
         </div>
     </div>
-    <div class="history-display">
-        <h3>Current Variable State:</h3>
-        <pre id="variableState"></pre>
+    
+    <!-- Display current variable state -->
+    <div class="examples">
+        <h3>Example Usages</h3>
+        <p>Try typing any of the following expressions in a new cell and hit <strong>Enter</strong>:</p>
+        <pre>
+    // Basic arithmetic and variable assignment
+    2 + 2
+    a = 5
+    a * 10
+    
+    // Plotting functions
+    plot('x^2', -10, 10)
+    scatter('sin(x)', -6.28, 6.28)
+    barPlot('cos(x)', 0, 6.28)
+    histPlot([1, 2, 2, 3, 3, 3, 4, 4, 5])
+    polarPlot('1+cos(theta)', 0, 6.28)
+    
+    // Algebraic operations and matrices
+    
+    // Solve a system of linear equations:
+    //   2x + y = 1
+    //   x  - y = 0
+    A = [[2, 1], [1, -1]]
+    b = [1, 0]
+    lusolve(A, b)
+    
+    // Matrix operations
+    m = [[1, 2], [3, 4]]
+    m * m           // Matrix multiplication
+    det(m)          // Determinant of m
+    multiply(m, 10) // Scalar multiplication
+    multiply(m, m)  // Element-wise multiplication
+    
+    // Advanced usage: simplify an algebraic expression
+    simplify('x^2 - 4')
+        </pre>
     </div>
+    
 
     <script>
         const notebook = document.getElementById('notebook');
