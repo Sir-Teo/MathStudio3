@@ -1,95 +1,207 @@
+/* General Body Styles */
 body {
-  font-family: system-ui, -apple-system, sans-serif;
-  max-width: 800px;
-  margin: 20px auto;
-  background-color: #f8f9fa;
-  padding: 20px;
-  box-sizing: border-box;
-}
-
-.cell {
-  margin-bottom: 20px;
-  border-radius: 4px;
-  overflow: hidden;
-}
-
-.input-area {
-  background-color: #f1f1f1;
-  padding: 10px;
-  display: flex;
-  flex-wrap: wrap;
-}
-
-.cell-number {
-  color: #666;
-  font-family: monospace;
-  margin-right: 10px;
-  user-select: none;
-  min-width: 60px;
-}
-
-.input-field {
-  flex-grow: 1;
-  font-family: monospace;
-  padding: 8px;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  background-color: white;
-  min-width: 0;
-}
-
-.output-area {
-  background-color: white;
-  padding: 10px;
-  border: 1px solid #ddd;
-  border-top: none;
-  font-family: monospace;
-  min-height: 20px;
-  overflow-x: auto;
-}
-
-.error {
-  color: #d32f2f;
-}
-
-.history-display, .examples {
-  margin-top: 20px;
-  padding: 10px;
-  background-color: #f8f9fa;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  word-wrap: break-word;
-}
-
-.examples pre {
-  background-color: #e9ecef;
-  padding: 10px;
-  border-radius: 4px;
-  overflow-x: auto;
-}
-
-/* Responsive Plot Container */
-[id^="plot-"] {
-  width: 100% !important;
-  height: 400px;
-}
-
-/* Media Query for Small Screens */
-@media (max-width: 600px) {
-  body {
-    padding: 10px;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    max-width: min(90%, 900px);
+    margin: clamp(15px, 4vh, 30px) auto;
+    background-color: #fafafa;
+    padding: clamp(10px, 3vw, 20px);
+    box-sizing: border-box;
+    color: #333;
+    line-height: 1.6;
   }
   
-  .input-area, .output-area, .history-display, .examples {
-    padding: 8px;
+  /* Notebook Cell Container */
+  .cell {
+    margin-bottom: clamp(15px, 3vh, 20px);
+    border-radius: clamp(4px, 1vw, 6px);
+    background-color: #fff;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    overflow: hidden;
+    transition: box-shadow 0.2s ease-in-out;
+    position: relative;
+  }
+  
+  .cell:hover {
+    box-shadow: 0 3px 8px rgba(0,0,0,0.15);
+  }
+  
+  /* Input Area Styling */
+  .input-area {
+    background-color: #f7f7f7;
+    padding: clamp(8px, 2vw, 15px);
+    padding-right: clamp(80px, 15vw, 100px);
+    display: flex;
+    align-items: center;
+    border-bottom: 1px solid #e0e0e0;
+    flex-wrap: wrap;
+    gap: 8px;
+    position: relative;
   }
   
   .cell-number {
-    min-width: 50px;
-    font-size: 0.9em;
+    color: #555;
+    font-family: monospace;
+    margin-right: clamp(8px, 2vw, 12px);
+    user-select: none;
+    min-width: clamp(40px, 8vw, 60px);
+    font-size: clamp(0.85rem, 2vw, 1rem);
   }
   
   .input-field {
-    font-size: 0.9em;
+    flex: 1 1 200px;
+    font-family: monospace;
+    padding: clamp(8px, 1.5vw, 12px);
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    background-color: #fff;
+    transition: border 0.2s ease-in-out;
+    font-size: clamp(0.85rem, 2vw, 1rem);
+    min-width: 0;
   }
-}
+  
+  .input-field:focus {
+    outline: none;
+    border-color: #5b9bd5;
+  }
+  
+  /* Output Area Styling */
+  .output-area {
+    background-color: #fff;
+    padding: clamp(8px, 2vw, 15px);
+    font-family: monospace;
+    min-height: 30px;
+    overflow-x: auto;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    font-size: clamp(0.85rem, 2vw, 1rem);
+  }
+  
+  /* Error Message */
+  .error {
+    color: #d32f2f;
+    width: 100%;
+  }
+  
+  /* History and Examples Section */
+  .history-display, .examples {
+    margin-top: clamp(20px, 4vh, 30px);
+    padding: clamp(10px, 2vw, 15px);
+    background-color: #fff;
+    border: 1px solid #e0e0e0;
+    border-radius: clamp(4px, 1vw, 6px);
+  }
+  
+  .history-display h3, .examples h3 {
+    margin-top: 0;
+    font-size: clamp(1.1rem, 2.5vw, 1.2em);
+    color: #444;
+  }
+  
+  .examples pre {
+    background-color: #f3f3f3;
+    padding: clamp(8px, 2vw, 12px);
+    border-radius: 4px;
+    overflow-x: auto;
+    font-size: clamp(0.8rem, 2vw, 0.95em);
+    white-space: pre-wrap;
+  }
+  
+  /* Responsive Plot Container */
+  [id^="plot-"] {
+    width: 100% !important;
+    height: clamp(300px, 50vh, 400px) !important;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    margin-top: clamp(8px, 2vh, 10px);
+  }
+  
+  /* Cell Actions */
+  .cell-actions {
+    display: flex;
+    flex-direction: row;
+    gap: clamp(2px, 1vw, 4px);
+    position: absolute;
+    right: clamp(8px, 2vw, 10px);
+    top: clamp(8px, 2vw, 10px);
+    z-index: 10;
+  }
+  
+  .cell-actions button {
+    padding: clamp(4px, 1vw, 6px);
+    border: none;
+    background: rgba(0, 0, 0, 0.05);
+    border-radius: 4px;
+    cursor: pointer;
+    opacity: 0.7;
+    transition: all 0.2s ease;
+    font-size: clamp(0.85rem, 2vw, 1rem);
+  }
+  
+  .cell-actions button:hover {
+    opacity: 1;
+    background: rgba(0, 0, 0, 0.1);
+    transform: scale(1.05);
+  }
+  
+  /* Touch Device Optimizations */
+  @media (hover: none) {
+    .cell-actions button {
+      opacity: 1;
+      padding: clamp(8px, 2vw, 10px);
+    }
+    
+    .input-field {
+      padding: clamp(10px, 2vw, 14px);
+    }
+  }
+  
+  /* Small Screen Adjustments */
+  @media (max-width: 600px) {
+    body {
+      margin: 10px auto;
+    }
+    
+    .cell-actions {
+      position: static;
+      justify-content: flex-end;
+      padding: 8px;
+      background-color: #f7f7f7;
+      border-bottom: 1px solid #e0e0e0;
+    }
+    
+    .input-area {
+      padding-right: clamp(8px, 2vw, 15px);
+      flex-direction: column;
+      align-items: flex-start;
+    }
+    
+    .cell-number {
+      margin-right: 0;
+    }
+    
+    .input-field {
+      width: 100%;
+    }
+  }
+  
+  /* Print Optimization */
+  @media print {
+    body {
+      max-width: 100%;
+      margin: 0;
+      padding: 10px;
+      background-color: #fff;
+    }
+    
+    .cell {
+      break-inside: avoid;
+      box-shadow: none;
+      border: 1px solid #ddd;
+    }
+    
+    .cell-actions {
+      display: none;
+    }
+  }
+  

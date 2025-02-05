@@ -122,6 +122,10 @@ function createNewCell() {
   const cell = document.createElement('div');
   cell.className = 'cell';
   cell.innerHTML = `
+    <div class="cell-actions">
+      <button class="delete-cell">🗑️</button>
+      <button class="run-cell">▶️</button>
+    </div>
     <div class="input-area">
       <span class="cell-number">In[*]:</span>
       <input type="text" class="input-field" placeholder="Enter mathematical expression...">
@@ -131,6 +135,19 @@ function createNewCell() {
       <span class="result"></span>
     </div>
   `;
+  
+  // Add event listeners for cell actions
+  cell.querySelector('.delete-cell').addEventListener('click', () => {
+    if (notebook.children.length > 1) {
+      cell.remove();
+    }
+  });
+  
+  cell.querySelector('.run-cell').addEventListener('click', () => {
+    const input = cell.querySelector('.input-field');
+    evaluateExpression(input.value, cell);
+  });
+  
   notebook.appendChild(cell);
   return cell.querySelector('.input-field');
 }
@@ -210,17 +227,36 @@ function evaluateExpression(input, cell) {
   }
 }
 
-// Handle input events: press Enter to evaluate and then create a new cell.
+// Add keyboard shortcuts to notebook event listener
 notebook.addEventListener('keydown', (event) => {
-  if (event.target.classList.contains('input-field') && event.key === 'Enter') {
-    const currentCell = event.target.closest('.cell');
-    const success = evaluateExpression(event.target.value, currentCell);
-    
-    // Only create a new cell if this is the last cell.
-    const isLastCell = currentCell === notebook.lastElementChild;
-    if (success && isLastCell) {
-      const newInput = createNewCell();
-      newInput.focus();
+  if (event.target.classList.contains('input-field')) {
+    if (event.key === 'Enter' && !event.shiftKey) {
+      // Existing Enter key logic
+      const currentCell = event.target.closest('.cell');
+      const success = evaluateExpression(event.target.value, currentCell);
+      
+      const isLastCell = currentCell === notebook.lastElementChild;
+      if (success && isLastCell) {
+        const newInput = createNewCell();
+        newInput.focus();
+      }
+    } else if (event.key === 'ArrowUp' && event.target.selectionStart === 0) {
+      // Navigate to previous cell
+      const currentCell = event.target.closest('.cell');
+      const prevCell = currentCell.previousElementSibling;
+      if (prevCell) {
+        prevCell.querySelector('.input-field').focus();
+      }
+      event.preventDefault();
+    } else if (event.key === 'ArrowDown' && 
+               event.target.selectionStart === event.target.value.length) {
+      // Navigate to next cell
+      const currentCell = event.target.closest('.cell');
+      const nextCell = currentCell.nextElementSibling;
+      if (nextCell) {
+        nextCell.querySelector('.input-field').focus();
+      }
+      event.preventDefault();
     }
   }
 });
