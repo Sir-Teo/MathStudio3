@@ -1,0 +1,95 @@
+body {
+  font-family: system-ui, -apple-system, sans-serif;
+  max-width: 800px;
+  margin: 20px auto;
+  background-color: #f8f9fa;
+  padding: 20px;
+  box-sizing: border-box;
+}
+
+.cell {
+  margin-bottom: 20px;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.input-area {
+  background-color: #f1f1f1;
+  padding: 10px;
+  display: flex;
+  flex-wrap: wrap;
+}
+
+.cell-number {
+  color: #666;
+  font-family: monospace;
+  margin-right: 10px;
+  user-select: none;
+  min-width: 60px;
+}
+
+.input-field {
+  flex-grow: 1;
+  font-family: monospace;
+  padding: 8px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  background-color: white;
+  min-width: 0;
+}
+
+.output-area {
+  background-color: white;
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-top: none;
+  font-family: monospace;
+  min-height: 20px;
+  overflow-x: auto;
+}
+
+.error {
+  color: #d32f2f;
+}
+
+.history-display, .examples {
+  margin-top: 20px;
+  padding: 10px;
+  background-color: #f8f9fa;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  word-wrap: break-word;
+}
+
+.examples pre {
+  background-color: #e9ecef;
+  padding: 10px;
+  border-radius: 4px;
+  overflow-x: auto;
+}
+
+/* Responsive Plot Container */
+[id^="plot-"] {
+  width: 100% !important;
+  height: 400px;
+}
+
+/* Media Query for Small Screens */
+@media (max-width: 600px) {
+  body {
+    padding: 10px;
+  }
+  
+  .input-area, .output-area, .history-display, .examples {
+    padding: 8px;
+  }
+  
+  .cell-number {
+    min-width: 50px;
+    font-size: 0.9em;
+  }
+  
+  .input-field {
+    font-size: 0.9em;
+  }
+}

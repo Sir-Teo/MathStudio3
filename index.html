@@ -1,137 +1,41 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>MathStudio (LaTeX Output)</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <!-- Load math.js -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjs/11.8.0/math.js"></script>
-    <!-- Load Plotly.js -->
-    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
-    <!-- Load MathJax for LaTeX rendering -->
-    <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
-    <style>
-        body {
-            font-family: system-ui, -apple-system, sans-serif;
-            max-width: 800px;
-            margin: 20px auto;
-            background-color: #f8f9fa;
-            padding: 20px;
-            box-sizing: border-box;
-        }
-
-        .cell {
-            margin-bottom: 20px;
-            border-radius: 4px;
-            overflow: hidden;
-        }
-
-        .input-area {
-            background-color: #f1f1f1;
-            padding: 10px;
-            display: flex;
-            flex-wrap: wrap;
-        }
-
-        .cell-number {
-            color: #666;
-            font-family: monospace;
-            margin-right: 10px;
-            user-select: none;
-            min-width: 60px;
-        }
-
-        .input-field {
-            flex-grow: 1;
-            font-family: monospace;
-            padding: 8px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            background-color: white;
-            min-width: 0;
-        }
-
-        .output-area {
-            background-color: white;
-            padding: 10px;
-            border: 1px solid #ddd;
-            border-top: none;
-            font-family: monospace;
-            min-height: 20px;
-            overflow-x: auto;
-        }
-
-        .error {
-            color: #d32f2f;
-        }
-
-        .history-display, .examples {
-            margin-top: 20px;
-            padding: 10px;
-            background-color: #f8f9fa;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            word-wrap: break-word;
-        }
-
-        .examples pre {
-            background-color: #e9ecef;
-            padding: 10px;
-            border-radius: 4px;
-            overflow-x: auto;
-        }
-
-        /* Responsive Plot Container */
-        [id^="plot-"] {
-            width: 100% !important;
-            height: 400px;
-        }
-
-        /* Media Query for Small Screens */
-        @media (max-width: 600px) {
-            body {
-                padding: 10px;
-            }
-
-            .input-area, .output-area, .history-display, .examples {
-                padding: 8px;
-            }
-
-            .cell-number {
-                min-width: 50px;
-                font-size: 0.9em;
-            }
-
-            .input-field {
-                font-size: 0.9em;
-            }
-        }
-    </style>
+  <meta charset="UTF-8">
+  <title>MathStudio (LaTeX Output)</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!-- External CSS -->
+  <link rel="stylesheet" href="css/style.css">
+  <!-- Load external libraries -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjs/11.8.0/math.js"></script>
+  <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
 </head>
 <body>
-    <div id="notebook">
-        <div class="cell">
-            <div class="input-area">
-                <span class="cell-number">In[*]:</span>
-                <input type="text" class="input-field" placeholder="Enter mathematical expression...">
-            </div>
-            <div class="output-area">
-                <span class="cell-number">Out[*]:</span>
-                <span class="result"></span>
-            </div>
-        </div>
+  <div id="notebook">
+    <div class="cell">
+      <div class="input-area">
+        <span class="cell-number">In[*]:</span>
+        <input type="text" class="input-field" placeholder="Enter mathematical expression...">
+      </div>
+      <div class="output-area">
+        <span class="cell-number">Out[*]:</span>
+        <span class="result"></span>
+      </div>
     </div>
-    
-    <!-- Display current variable state -->
-    <div class="history-display">
-        <h3>Current Variable State:</h3>
-        <pre id="variableState"></pre>
-    </div>
+  </div>
+  
+  <!-- Display current variable state -->
+  <div class="history-display">
+    <h3>Current Variable State:</h3>
+    <pre id="variableState"></pre>
+  </div>
 
-    <!-- Example Usages -->
-    <div class="examples">
-        <h3>Example Usages</h3>
-        <p>Try typing any of the following expressions in a new cell and hit <strong>Enter</strong>:</p>
-        <pre>
+  <!-- Example Usages -->
+  <div class="examples">
+    <h3>Example Usages</h3>
+    <p>Try typing any of the following expressions in a new cell and hit <strong>Enter</strong>:</p>
+    <pre>
 // Basic arithmetic
 2 + 2
 
@@ -153,240 +57,10 @@ histPlot([1, 2, 2, 3, 3, 3, 4, 4, 5])
 
 // Polar plot: Plot r = 1 + cos(theta) from theta = 0 to 2π
 polarPlot('1+cos(theta)', 0, 6.28)
-        </pre>
-    </div>
+    </pre>
+  </div>
 
-    <script>
-        const notebook = document.getElementById('notebook');
-        const variableState = document.getElementById('variableState');
-        let evaluationCount = 0;
-        const scope = {};
-
-        // --- Custom Plotting Functions Integration ---
-
-        // Helper function to generate x values
-        function generateXValues(xMin, xMax, numPoints = 100) {
-            const step = (xMax - xMin) / numPoints;
-            return math.range(xMin, xMax, step, true).toArray();
-        }
-
-        // 1. Line Plot: `plot(expr, xMin, xMax, options)`
-        scope.plot = function(expr, xMin, xMax, options) {
-            const xValues = generateXValues(xMin, xMax);
-            const compiled = math.compile(expr);
-            const yValues = xValues.map(x => compiled.evaluate({ x }));
-            return {
-                __plotly: true,
-                data: [{
-                    x: xValues,
-                    y: yValues,
-                    type: 'scatter',
-                    mode: 'lines'
-                }],
-                layout: Object.assign({ 
-                    title: `Plot of ${expr}`,
-                    margin: { t: 40 }
-                }, options || {})
-            };
-        };
-
-        // 2. Scatter Plot: `scatter(expr, xMin, xMax, options)`
-        scope.scatter = function(expr, xMin, xMax, options) {
-            const xValues = generateXValues(xMin, xMax);
-            const compiled = math.compile(expr);
-            const yValues = xValues.map(x => compiled.evaluate({ x }));
-            return {
-                __plotly: true,
-                data: [{
-                    x: xValues,
-                    y: yValues,
-                    type: 'scatter',
-                    mode: 'markers'
-                }],
-                layout: Object.assign({
-                    title: `Scatter Plot of ${expr}`,
-                    margin: { t: 40 }
-                }, options || {})
-            };
-        };
-
-        // 3. Bar Plot: `barPlot(expr, xMin, xMax, options)`
-        scope.barPlot = function(expr, xMin, xMax, options) {
-            const xValues = generateXValues(xMin, xMax, 20); // fewer points for bars
-            const compiled = math.compile(expr);
-            const yValues = xValues.map(x => compiled.evaluate({ x }));
-            return {
-                __plotly: true,
-                data: [{
-                    x: xValues,
-                    y: yValues,
-                    type: 'bar'
-                }],
-                layout: Object.assign({
-                    title: `Bar Plot of ${expr}`,
-                    margin: { t: 40 }
-                }, options || {})
-            };
-        };
-
-        // 4. Histogram Plot: `histPlot(data, options)`
-        scope.histPlot = function(data, options) {
-            if (data && typeof data.toArray === 'function') {
-                data = data.toArray();
-            }
-            if (!Array.isArray(data)) {
-                throw new Error("histPlot expects an array of numbers as the first argument.");
-            }
-            return {
-                __plotly: true,
-                data: [{
-                    x: data,
-                    type: 'histogram'
-                }],
-                layout: Object.assign({
-                    title: `Histogram`,
-                    margin: { t: 40 }
-                }, options || {})
-            };
-        };
-
-        // 5. Polar Plot: `polarPlot(expr, thetaMin, thetaMax, options)`
-        scope.polarPlot = function(expr, thetaMin, thetaMax, options) {
-            const numPoints = 100;
-            const thetaValues = math.range(thetaMin, thetaMax, (thetaMax - thetaMin) / numPoints, true).toArray();
-            const compiled = math.compile(expr);
-            const rValues = thetaValues.map(theta => compiled.evaluate({ theta }));
-            const xValues = thetaValues.map((theta, i) => rValues[i] * Math.cos(theta));
-            const yValues = thetaValues.map((theta, i) => rValues[i] * Math.sin(theta));
-            return {
-                __plotly: true,
-                data: [{
-                    x: xValues,
-                    y: yValues,
-                    type: 'scatter',
-                    mode: 'lines'
-                }],
-                layout: Object.assign({
-                    title: `Polar Plot of ${expr}`,
-                    xaxis: { title: 'x' },
-                    yaxis: { title: 'y' },
-                    margin: { t: 40 }
-                }, options || {})
-            };
-        };
-
-        // --- End of Custom Plotting Functions ---
-
-        function createNewCell() {
-            const cell = document.createElement('div');
-            cell.className = 'cell';
-            cell.innerHTML = `
-                <div class="input-area">
-                    <span class="cell-number">In[*]:</span>
-                    <input type="text" class="input-field" placeholder="Enter mathematical expression...">
-                </div>
-                <div class="output-area">
-                    <span class="cell-number">Out[*]:</span>
-                    <span class="result"></span>
-                </div>
-            `;
-            notebook.appendChild(cell);
-            return cell.querySelector('.input-field');
-        }
-
-        function updateVariableState() {
-            const stateDisplay = Object.entries(scope)
-                .filter(([key, value]) => !key.startsWith('_'))
-                .map(([key, value]) => `${key} = ${JSON.stringify(value)}`)
-                .join('\n');
-            variableState.textContent = stateDisplay;
-        }
-
-        function updateCellNumbers(currentCell, evaluationNumber) {
-            const inputLabel = currentCell.querySelector('.input-area .cell-number');
-            const outputLabel = currentCell.querySelector('.output-area .cell-number');
-            inputLabel.textContent = `In[${evaluationNumber}]:`;
-            outputLabel.textContent = `Out[${evaluationNumber}]:`;
-        }
-
-        // Convert the evaluated result to LaTeX (if possible)
-        // For numbers, we simply output the number. For other types, we attempt a conversion.
-        function toLatex(result) {
-            // If the result is a number or a simple string, just return it.
-            if (typeof result === 'number' || typeof result === 'string') {
-                return result;
-            }
-            // Attempt to use math.parse and toTex if possible.
-            try {
-                // Note: This conversion might not work for every type.
-                return math.parse(result.toString()).toTex();
-            } catch (e) {
-                return result.toString();
-            }
-        }
-
-        function evaluateExpression(input, cell) {
-            const outputElement = cell.querySelector('.result');
-            try {
-                // Special command "Amy"
-                if (input.trim() === 'Amy') {
-                    evaluationCount++;
-                    updateCellNumbers(cell, evaluationCount);
-                    outputElement.textContent = 'cmllkagqd🥚';
-                    scope[`_${evaluationCount}`] = 'cmllkagqd🥚';
-                    updateVariableState();
-                    return true;
-                }
-                
-                evaluationCount++;
-                updateCellNumbers(cell, evaluationCount);
-                
-                // Evaluate the expression within the persistent scope.
-                const result = math.evaluate(input, scope);
-                
-                // If the result is flagged for Plotly rendering, embed a plot.
-                if (result && result.__plotly) {
-                    outputElement.innerHTML = `<div id="plot-${evaluationCount}" style="width:100%; height:400px;"></div>`;
-                    Plotly.newPlot(`plot-${evaluationCount}`, result.data, result.layout);
-                } else {
-                    // Convert the result to LaTeX and wrap in delimiters.
-                    const latexResult = toLatex(result);
-                    outputElement.innerHTML = `\\( ${latexResult} \\)`;
-                    // Tell MathJax to typeset the new content.
-                    MathJax.typesetPromise([outputElement]);
-                }
-                
-                // Save the result in the scope as _1, _2, etc.
-                scope[`_${evaluationCount}`] = result;
-                
-                // Update the variable state display.
-                updateVariableState();
-                
-                return true;
-            } catch (error) {
-                outputElement.textContent = error.message;
-                outputElement.className = 'result error';
-                return false;
-            }
-        }
-
-        // Handle input events: press Enter to evaluate and then create a new cell.
-        notebook.addEventListener('keydown', (event) => {
-            if (event.target.classList.contains('input-field') && event.key === 'Enter') {
-                const currentCell = event.target.closest('.cell');
-                const success = evaluateExpression(event.target.value, currentCell);
-                
-                // Only create a new cell if this is the last cell.
-                const isLastCell = currentCell === notebook.lastElementChild;
-                if (success && isLastCell) {
-                    const newInput = createNewCell();
-                    newInput.focus();
-                }
-            }
-        });
-
-        // Focus the first input field.
-        document.querySelector('.input-field').focus();
-    </script>
+  <!-- External JavaScript -->
+  <script src="js/script.js"></script>
 </body>
 </html>
